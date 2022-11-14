@@ -1,6 +1,7 @@
-const express = require('express')
 const dotenv = require("dotenv");
 dotenv.config();
+
+const express = require("express");
 const fetch = require("isomorphic-fetch");
 const btoa = require("btoa");
 
