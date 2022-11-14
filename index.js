@@ -2,8 +2,8 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const express = require("express");
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const apiKey = process.env.CLIENT_ID;
+const apiSecret = process.env.CLIENT_SECRET;
 
 const app = express();
 
@@ -12,11 +12,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-    createAccessToken(CLIENT_ID, CLIENT_SECRET);
-  res.send("visit /login to login with Blizzard oauth");
-});
 
-function createAccessToken(apiKey, apiSecret, region = "eu") {
   return new Promise((resolve, reject) => {
     const credentials = Buffer.from(`${apiKey}:${apiSecret}`);
 
@@ -51,7 +47,10 @@ function createAccessToken(apiKey, apiSecret, region = "eu") {
       reject(error);
     });
   });
-}
+
+});
+
+
 
 app.use((err, req, res, next) => {
   res.end(err.toString());
