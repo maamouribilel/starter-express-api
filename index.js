@@ -2,9 +2,6 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const express = require("express");
-const fetch = require("isomorphic-fetch");
-const btoa = require("btoa");
-
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 
