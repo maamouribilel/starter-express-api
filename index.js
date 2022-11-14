@@ -7,72 +7,50 @@ const btoa = require("btoa");
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const AUTHORIZE_ENDPOINT = "https://us.battle.net/oauth/authorize";
-const TOKEN_ENDPOINT = "https://us.battle.net/oauth/token";
-
-const redirectUri = "http://localhost:3000/oauth/callback";
-const scopes = ["wow.profile"];
 
 const app = express();
 
 app.get("/", (req, res) => {
+  createAccessToken(CLIENT_ID, CLIENT_SECRET, region = "eu")
   res.send("visit /login to login with Blizzard oauth");
 });
 
-app.get("/login", (req, res) => {
-  const scopesString = encodeURIComponent(scopes.join(" "));
-  const redirectUriString = encodeURIComponent(redirectUri);
-  const authorizeUrl = `${AUTHORIZE_ENDPOINT}?client_id=${CLIENT_ID}&scope=${scopesString}&redirect_uri=${redirectUriString}&response_type=code`;
-  res.redirect(authorizeUrl);
-});
+function createAccessToken(apiKey, apiSecret, region = "eu") {
+  return new Promise((resolve, reject) => {
+    const credentials = Buffer.from(`${apiKey}:${apiSecret}`);
 
-app.get("/oauth/callback", async (req, res, next) => {
-  const { code } = req.query;
+    const requestOptions = {
+      host: `${region}.battle.net`,
+      path: "/oauth/token",
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${credentials.toString("base64")}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    };
 
-  // build headers
-  const basicAuth = btoa(`${CLIENT_ID}:${CLIENT_SECRET}`);
-  const headers = {
-    authorization: `Basic ${basicAuth}`,
-    "Content-Type": "application/x-www-form-urlencoded",
-  };
+    let responseData = "";
 
-  // build request body
-  const params = new URLSearchParams();
-  params.append("redirect_uri", redirectUri);
-  params.append("scope", scopes.join(" "));
-  params.append("grant_type", "authorization_code");
-  params.append("code", code);
+    function requestHandler(res) {
+      res.on("data", (chunk) => {
+        responseData += chunk;
+      });
+      res.on("end", () => {
+        const data = JSON.parse(responseData);
+        console.log("response data", responseData);
+        resolve(data);
+      });
+    }
 
-  // execute request
-  const requestOptions = {
-    method: "POST",
-    body: params,
-    headers,
-  };
-  const oauthResponse = await fetch(TOKEN_ENDPOINT, requestOptions);
+    const request = require("https").request(requestOptions, requestHandler);
+    request.write("grant_type=client_credentials");
+    request.end();
 
-  // handle errors
-  if (!oauthResponse.ok) {
-    // res.status >= 200 && res.status < 300
-    console.log(`Token request failed with "${oauthResponse.statusText}"`);
-    return next(new Error(oauthResponse.statusText));
-  }
-
-  // work with the oauth response
-  const responseData = await oauthResponse.json();
-
-  // do something with the `access_token` from `responseData`
-  // {
-  //     "access_token": "123456789",
-  //     "token_type": "bearer",
-  //     "expires_in": 86399,
-  //     "scope": "wow.profile"
-  // }
-
-  // send a JSON response (just an example)
-  res.json(responseData);
-  console.log("response DATAAAAAA", res.json(responseData));
-});
+    request.on("error", (error) => {
+      reject(error);
+    });
+  });
+}
 
 app.use((err, req, res, next) => {
   res.end(err.toString());
