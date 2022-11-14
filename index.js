@@ -8,7 +8,11 @@ const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const app = express();
 
 app.get("/", (req, res) => {
-  createAccessToken(CLIENT_ID, CLIENT_SECRET, region = "eu")
+  res.send("visit /login to login with Blizzard oauth");
+});
+
+app.get("/login", (req, res) => {
+    createAccessToken(CLIENT_ID, CLIENT_SECRET);
   res.send("visit /login to login with Blizzard oauth");
 });
 
